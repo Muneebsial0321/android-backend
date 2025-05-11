@@ -77,7 +77,7 @@ const getMyApplications = async (req, res) => {
 
     const myJobs = await Promise.all(app.map(async (e) => {
       const job = await Job.get(e.jobId)
-      const user = await User.get(e.userId, { attributes: ['name', "Users_PK", "picUrl"] })
+      const user = await User.get(job.userId, { attributes: ['name', "Users_PK", "picUrl"] })
       console.log({ user })
 
       if (job) {
