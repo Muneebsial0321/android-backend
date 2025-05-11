@@ -88,32 +88,13 @@ const getEvent = async (req, res) => {
         }
 
         // Fetch related events (same eventCatagory or eventCreatedBy, but not this one)
-        // 1. By eventCatagory
-        const relatedByCategory = await Event.scan()
-            .where('_id').ne(event._id)
-            .where('eventCatagory').eq(event.eventCatagory)
-            .limit(10)
-            .exec();
-        // 2. By eventCreatedBy
-        const relatedByCreator = await Event.scan()
-            .where('_id').ne(event._id)
-            .where('eventCreatedBy').eq(event.eventCreatedBy)
-            .limit(10)
-            .exec();
-        // Merge and deduplicate
-        const seen = new Set();
-        const relatedEvents = [...relatedByCategory, ...relatedByCreator].filter(p => {
-            if (seen.has(p._id)) return false;
-            seen.add(p._id);
-            return true;
-        }).slice(0, 10); // Limit to 10 total
 
         res.status(200).json({
             event,
             user,
             speakers: filterSpeakers,
             participants: filterParticipants,
-            relatedEvents
+            
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

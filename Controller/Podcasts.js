@@ -5,7 +5,6 @@ const { response } = require('express');
 const mm = require('music-metadata');
 const User = require('../Schemas/User');
 const WishList = require('../Schemas/WishList');
-const {Logger} = require('../Functions/Logger')
 
 
 
@@ -13,9 +12,9 @@ const createPodcast = async (req, res) => {
     try {
         console.log("creating podcast")
         let data = { ...req.body }
-        const speakerArray = req.body.speakerArray?JSON.parse(req.body.speakerArray):[];
+        const speakerArray = req.body.speakerArray ? JSON.parse(req.body.speakerArray) : [];
         if (req.files != null) {
-            if (req.files.image!= null) {
+            if (req.files.image != null) {
                 const picName = req.files.image[0].key
                 const picUrl = req.files.image[0].location
                 data = { ...data, picName, picUrl }
@@ -23,24 +22,24 @@ const createPodcast = async (req, res) => {
                 // console.log({data})
 
             }
-            if (req.files.audio!= null) {
+            if (req.files.audio != null) {
                 // console.log("no audio")
                 const audioName = req.files.audio[0].key
                 const audioUrl = req.files.audio[0].location
-                console.log({adudioFIleis:req.files.audio[0]})
+                console.log({ adudioFIleis: req.files.audio[0] })
                 data = { ...data, audioUrl, audioName }
-            } 
+            }
         }
         const _id = uuidv4();
         const seasonNumber = req.body.seasonNumber && +req.body.seasonNumber
-        const episodeNumber  = req.body.episodeNumber &&  +req.body.episodeNumber 
-        const podcastDuration  = req.body.podcastDuration &&  +req.body.podcastDuration 
+        const episodeNumber = req.body.episodeNumber && +req.body.episodeNumber
+        const podcastDuration = req.body.podcastDuration && +req.body.podcastDuration
         // console.log({seasonNumber,episodeNumber})
-        const podcast = new Podcast({_id,...data,seasonNumber,episodeNumber,podcastDuration,speakerArray})
-        await podcast.save() 
-        res.json({message:"success",data:podcast})
+        const podcast = new Podcast({ _id, ...data, seasonNumber, episodeNumber, podcastDuration, speakerArray })
+        await podcast.save()
+        res.json({ message: "success", data: podcast })
     } catch (error) {
-        console.log("podcast error is ,",error)
+        console.log("podcast error is ,", error)
         res.status(500).json({ message: error.message });
     }
 }
@@ -61,24 +60,24 @@ const getPodcast = async (req, res) => {
 
         // Fetch related podcasts (same podcastType or userID, but not this one)
         // 1. By podcastType
-        const relatedByType = await Podcast.scan()
-            .where('_id').ne(podcast._id)
-            .where('podcastType').eq(podcast.podcastType)
-            .limit(10)
-            .exec();
-        // 2. By userID
-        const relatedByUser = await Podcast.scan()
-            .where('_id').ne(podcast._id)
-            .where('userID').eq(podcast.userID)
-            .limit(10)
-            .exec();
+        // const relatedByType = await Podcast.scan()
+        //     .where('_id').ne(podcast._id)
+        //     .where('podcastType').eq(podcast.podcastType)
+        //     .limit(10)
+        //     .exec();
+        // // 2. By userID
+        // const relatedByUser = await Podcast.scan()
+        //     .where('_id').ne(podcast._id)
+        //     .where('userID').eq(podcast.userID)
+        //     .limit(10)
+        //     .exec();
         // Merge and deduplicate
-        const seen = new Set();
-        const relatedPodcasts = [...relatedByType, ...relatedByUser].filter(p => {
-            if (seen.has(p._id)) return false;
-            seen.add(p._id);
-            return true;
-        }).slice(0, 10); // Limit to 10 total
+        // const seen = new Set();
+        // const relatedPodcasts = [...relatedByType, ...relatedByUser].filter(p => {
+        //     if (seen.has(p._id)) return false;
+        //     seen.add(p._id);
+        //     return true;
+        // }).slice(0, 10); // Limit to 10 total
 
         const avgRating = mean(ratings)
         const totalComments = reviews.length
@@ -87,10 +86,9 @@ const getPodcast = async (req, res) => {
             totalComments,
             ...podcast,
             speakers: users,
-            relatedPodcasts
         });
     } catch (error) {
-        console.log({url:req.originalUrl,error});
+        console.log({ url: req.originalUrl, error });
         res.status(500).json({ message: error.message });
     }
 }
@@ -109,8 +107,8 @@ const getAllPodcasts = async (req, res) => {
         // console.log({SavedPodcasts})
         // // make a set
         // SavedPodcasts = new Set([...SavedPodcasts])
-         
-        const data = await Promise.all(podcasts.map(async(e)=>{
+
+        const data = await Promise.all(podcasts.map(async (e) => {
             try {
                 const user = await User.get(e.userID);
                 // const isSaved = SavedPodcasts.has(e._id)
@@ -122,13 +120,14 @@ const getAllPodcasts = async (req, res) => {
                     user: user || null // If user doesn't exist, set to null
                 };
             } catch (userError) {
-                console.log({userError})
+                console.log({ userError })
                 return {
                     ...e,
                     user: null // Set user as null if not found or any error occurs
                 };
-     } }))
-        res.status(200).json({ count: data.length, data});
+            }
+        }))
+        res.status(200).json({ count: data.length, data });
         // res.status(200).json({ count: podcasts.length, podcasts});
     } catch (error) {
         console.log(error)
@@ -179,7 +178,6 @@ function mean(array) {
     const sum = array.reduce((acc, num) => acc + num, 0);
     return sum / Number(array.length);
 }
-
 
 
 module.exports = { createPodcast, updatePodcast, getAllPodcasts, getPodcast, deletePodcast, searchPodcast }
